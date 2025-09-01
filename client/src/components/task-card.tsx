@@ -80,7 +80,10 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Badge 
           variant="outline" 
-          className="text-xs border-current"
+          className={cn(
+            "text-xs",
+            getTeamColorClass(task.team)
+          )}
           data-testid={`badge-task-team-${task.id}`}
         >
           {task.team}

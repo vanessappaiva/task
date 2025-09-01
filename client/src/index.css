@@ -123,21 +123,29 @@
     overflow-y: auto;
   }
 
-  /* Team color borders */
+  /* Team color borders and badges */
   .team-cris { 
     border-bottom-color: #01426C;
+    border-color: #01426C !important;
+    color: #01426C !important;
   }
   
   .team-michel { 
     border-bottom-color: #178417;
+    border-color: #178417 !important;
+    color: #178417 !important;
   }
   
   .team-verner { 
     border-bottom-color: #CF351B;
+    border-color: #CF351B !important;
+    color: #CF351B !important;
   }
   
   .team-fenili { 
     border-bottom-color: #B19900;
+    border-color: #B19900 !important;
+    color: #B19900 !important;
   }
 
   /* Deadline warning styles */
