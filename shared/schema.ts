@@ -22,14 +22,19 @@ export const teams = pgTable("teams", {
   colorClass: text("color_class").notNull(),
 });
 
-export const insertTaskSchema = createInsertSchema(tasks).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
+export const insertTaskSchema = z.object({
+  title: z.string().min(1, "Título é obrigatório"),
+  osNumber: z.string().min(1, "Número OS é obrigatório"), 
+  team: z.string().min(1, "Equipe é obrigatória"),
+  status: z.string().default("pendentes"),
   description: z.string().optional(),
   estimatedHours: z.string().optional(),
-  deadline: z.date().optional(),
+  deadline: z.string().optional().transform((val) => {
+    if (val && val.trim() !== '') {
+      return new Date(val);
+    }
+    return null;
+  }),
 });
 
 export const insertTeamSchema = createInsertSchema(teams).omit({

@@ -120,10 +120,13 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
     
     try {
       const taskData = {
-        ...formData,
-        deadline: formData.deadline ? new Date(formData.deadline) : undefined,
-        description: formData.description || undefined,
-        estimatedHours: formData.estimatedHours || undefined,
+        title: formData.title,
+        osNumber: formData.osNumber,
+        team: formData.team,
+        status: formData.status,
+        ...(formData.description && { description: formData.description }),
+        ...(formData.deadline && { deadline: formData.deadline }),
+        ...(formData.estimatedHours && { estimatedHours: formData.estimatedHours }),
       };
 
       const validatedData = insertTaskSchema.parse(taskData);
