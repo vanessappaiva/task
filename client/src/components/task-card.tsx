@@ -13,13 +13,12 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
   
   const getTeamColorClass = (team: string) => {
     const teamColorMap: Record<string, string> = {
-      "Core View": "team-blue",
-      "Fiscal View": "team-orange", 
-      "UX Design": "team-teal",
-      "Desenvolvimento": "team-purple",
-      "QA Testing": "team-pink",
+      "Equipe Cris": "team-cris",
+      "Equipe Michel": "team-michel", 
+      "Equipe Verner": "team-verner",
+      "Equipe Fenili": "team-fenili",
     };
-    return teamColorMap[team] || "team-blue";
+    return teamColorMap[team] || "team-cris";
   };
 
   const getDeadlineClasses = () => {
@@ -68,7 +67,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
           {task.title}
         </h3>
         <span className="text-xs text-muted-foreground" data-testid={`text-task-os-${task.id}`}>
-          {task.osNumber}
+          OS - {task.osNumber}
         </span>
       </div>
       
@@ -78,27 +77,29 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         </p>
       )}
       
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <Badge 
-          variant={getBadgeVariant()} 
-          className="text-xs"
+          variant="outline" 
+          className="text-xs border-current"
           data-testid={`badge-task-team-${task.id}`}
         >
-          {getBadgeText()}
+          {task.team}
         </Badge>
         
-        <div className="text-xs text-muted-foreground" data-testid={`text-task-deadline-${task.id}`}>
-          {task.deadline ? (
-            <span className={cn(
-              deadlineStatus === "critical" && "text-destructive font-medium",
-              deadlineStatus === "warning" && "text-yellow-600 font-medium"
-            )}>
-              Prazo: {formatDate(task.deadline)}
-            </span>
-          ) : (
-            "Sem prazo"
-          )}
-        </div>
+        {task.deadline && (
+          <Badge 
+            variant="secondary"
+            className={cn(
+              "text-xs",
+              deadlineStatus === "critical" && "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
+              deadlineStatus === "warning" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
+              deadlineStatus === "normal" && "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+            )}
+            data-testid={`badge-task-deadline-${task.id}`}
+          >
+            {formatDate(task.deadline)}
+          </Badge>
+        )}
       </div>
       
       {task.estimatedHours && (

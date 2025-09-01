@@ -124,24 +124,20 @@
   }
 
   /* Team color borders */
-  .team-purple { 
-    border-bottom-color: hsl(262.1 83.3% 57.8%);
+  .team-cris { 
+    border-bottom-color: #01426C;
   }
   
-  .team-orange { 
-    border-bottom-color: hsl(24.6 95% 53.1%);
+  .team-michel { 
+    border-bottom-color: #178417;
   }
   
-  .team-teal { 
-    border-bottom-color: hsl(172.4 66% 50.4%);
+  .team-verner { 
+    border-bottom-color: #CF351B;
   }
   
-  .team-pink { 
-    border-bottom-color: hsl(330.4 81.2% 60.4%);
-  }
-  
-  .team-blue { 
-    border-bottom-color: hsl(217.2 91.2% 59.8%);
+  .team-fenili { 
+    border-bottom-color: #B19900;
   }
 
   /* Deadline warning styles */

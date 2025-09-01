@@ -26,11 +26,10 @@ const STATUS_OPTIONS = [
 ];
 
 const TEAM_OPTIONS = [
-  { value: "Core View", label: "Core View" },
-  { value: "Fiscal View", label: "Fiscal View" },
-  { value: "UX Design", label: "UX Design" },
-  { value: "Desenvolvimento", label: "Desenvolvimento" },
-  { value: "QA Testing", label: "QA Testing" },
+  { value: "Equipe Cris", label: "Equipe Cris" },
+  { value: "Equipe Michel", label: "Equipe Michel" },
+  { value: "Equipe Verner", label: "Equipe Verner" },
+  { value: "Equipe Fenili", label: "Equipe Fenili" },
 ];
 
 export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
@@ -115,6 +114,28 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
     },
   });
 
+  const duplicateTaskMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof insertTaskSchema>) => {
+      const response = await apiRequest("POST", "/api/tasks", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Sucesso",
+        description: "Tarefa duplicada com sucesso!",
+      });
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao duplicar tarefa. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -149,6 +170,31 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDuplicate = () => {
+    try {
+      const taskData = {
+        title: `${formData.title} (Cópia)`,
+        osNumber: formData.osNumber,
+        team: formData.team,
+        status: "pendentes", // Always set to pending for duplicated tasks
+        ...(formData.description && { description: formData.description }),
+        ...(formData.deadline && { deadline: formData.deadline }),
+        ...(formData.estimatedHours && { estimatedHours: formData.estimatedHours }),
+      };
+
+      const validatedData = insertTaskSchema.parse(taskData);
+      duplicateTaskMutation.mutate(validatedData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: "Por favor, verifique os campos obrigatórios.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   return (
@@ -224,7 +270,7 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
           </div>
 
           <div>
-            <Label htmlFor="team">Equipe/Categoria</Label>
+            <Label htmlFor="team">Equipe</Label>
             <Select value={formData.team} onValueChange={(value) => handleInputChange("team", value)}>
               <SelectTrigger data-testid="select-task-team">
                 <SelectValue placeholder="Selecione uma equipe" />
@@ -255,15 +301,28 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
             </Select>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              data-testid="button-cancel-task"
-            >
-              Cancelar
-            </Button>
+          <div className="flex justify-between pt-4">
+            <div className="flex space-x-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                data-testid="button-cancel-task"
+              >
+                Cancelar
+              </Button>
+              {task && (
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={handleDuplicate}
+                  disabled={duplicateTaskMutation.isPending}
+                  data-testid="button-duplicate-task"
+                >
+                  {duplicateTaskMutation.isPending ? "Duplicando..." : "Duplicar"}
+                </Button>
+              )}
+            </div>
             <Button 
               type="submit" 
               disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
