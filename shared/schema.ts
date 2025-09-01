@@ -6,10 +6,10 @@ import { z } from "zod";
 export const tasks = pgTable("tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
-  description: text("description"),
+  description: text("description").default(""),
   osNumber: text("os_number").notNull(),
   deadline: timestamp("deadline"),
-  estimatedHours: varchar("estimated_hours"),
+  estimatedHours: varchar("estimated_hours").default(""),
   team: text("team").notNull(),
   status: text("status").notNull().default("pendentes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -26,6 +26,10 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  description: z.string().optional(),
+  estimatedHours: z.string().optional(),
+  deadline: z.date().optional(),
 });
 
 export const insertTeamSchema = createInsertSchema(teams).omit({

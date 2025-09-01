@@ -185,8 +185,12 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const now = new Date();
     const task: Task = { 
-      ...insertTask, 
+      ...insertTask,
       id, 
+      description: insertTask.description || null,
+      estimatedHours: insertTask.estimatedHours || null,
+      deadline: insertTask.deadline || null,
+      status: insertTask.status || "pendentes",
       createdAt: now, 
       updatedAt: now 
     };
@@ -201,6 +205,9 @@ export class MemStorage implements IStorage {
     const updatedTask: Task = {
       ...existingTask,
       ...updates,
+      description: updates.description !== undefined ? updates.description : existingTask.description,
+      estimatedHours: updates.estimatedHours !== undefined ? updates.estimatedHours : existingTask.estimatedHours,
+      deadline: updates.deadline !== undefined ? updates.deadline : existingTask.deadline,
       updatedAt: new Date(),
     };
     

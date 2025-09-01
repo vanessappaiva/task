@@ -121,13 +121,10 @@ export default function TaskModal({ task, teams, onClose }: TaskModalProps) {
     try {
       const taskData = {
         ...formData,
-        deadline: formData.deadline ? new Date(formData.deadline) : null,
+        deadline: formData.deadline ? new Date(formData.deadline) : undefined,
+        description: formData.description || undefined,
+        estimatedHours: formData.estimatedHours || undefined,
       };
-
-      // Remove empty deadline
-      if (!taskData.deadline) {
-        delete taskData.deadline;
-      }
 
       const validatedData = insertTaskSchema.parse(taskData);
 
