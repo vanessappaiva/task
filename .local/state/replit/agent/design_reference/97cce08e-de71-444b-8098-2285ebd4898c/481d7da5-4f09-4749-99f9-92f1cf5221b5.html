@@ -1,0 +1,589 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarefas em Andamento - Sistema de Gerenciamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          borderRadius: {
+            lg: "var(--radius)",
+            md: "calc(var(--radius) - 2px)",
+            sm: "calc(var(--radius) - 4px)",
+          },
+          colors: {
+            background: "var(--background)",
+            foreground: "var(--foreground)",
+            card: {
+              DEFAULT: "var(--card)",
+              foreground: "var(--card-foreground)",
+            },
+            popover: {
+              DEFAULT: "var(--popover)",
+              foreground: "var(--popover-foreground)",
+            },
+            primary: {
+              DEFAULT: "var(--primary)",
+              foreground: "var(--primary-foreground)",
+            },
+            secondary: {
+              DEFAULT: "var(--secondary)",
+              foreground: "var(--secondary-foreground)",
+            },
+            muted: {
+              DEFAULT: "var(--muted)",
+              foreground: "var(--muted-foreground)",
+            },
+            accent: {
+              DEFAULT: "var(--accent)",
+              foreground: "var(--accent-foreground)",
+            },
+            destructive: {
+              DEFAULT: "var(--destructive)",
+              foreground: "var(--destructive-foreground)",
+            },
+            border: "var(--border)",
+            input: "var(--input)",
+            ring: "var(--ring)",
+          },
+          fontFamily: {
+            sans: ["var(--font-sans)"],
+          }
+        },
+      }
+    };
+    </script>
+    <style>
+      :root {
+        --background: hsl(0 0% 100%);
+        --foreground: hsl(222.2 84% 4.9%);
+        --card: hsl(0 0% 100%);
+        --card-foreground: hsl(222.2 84% 4.9%);
+        --popover: hsl(0 0% 100%);
+        --popover-foreground: hsl(222.2 84% 4.9%);
+        --primary: hsl(221.2 83.2% 53.3%);
+        --primary-foreground: hsl(210 40% 98%);
+        --secondary: hsl(210 40% 96%);
+        --secondary-foreground: hsl(222.2 84% 4.9%);
+        --muted: hsl(210 40% 96%);
+        --muted-foreground: hsl(215.4 16.3% 46.9%);
+        --accent: hsl(210 40% 96%);
+        --accent-foreground: hsl(222.2 84% 4.9%);
+        --destructive: hsl(0 72.22% 50.59%);
+        --destructive-foreground: hsl(210 40% 98%);
+        --border: hsl(214.3 31.8% 91.4%);
+        --input: hsl(214.3 31.8% 91.4%);
+        --ring: hsl(221.2 83.2% 53.3%);
+        --radius: 0.5rem;
+        --font-sans: 'Inter', ui-sans-serif, system-ui;
+      }
+
+      .task-card {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      .modal {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .modal.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal.show .modal-content {
+        transform: translateY(0) scale(1);
+      }
+
+      .modal-content {
+        transform: translateY(-16px) scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .column-scrollable {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+
+      .team-purple { border-bottom-color: #8B5CF6; }
+      .team-orange { border-bottom-color: #F97316; }
+      .team-teal { border-bottom-color: #14B8A6; }
+      .team-pink { border-bottom-color: #EC4899; }
+      .team-blue { border-bottom-color: #3B82F6; }
+
+      .deadline-warning { border-left: 4px solid #F59E0B; background: linear-gradient(to right, #FEF3C7, transparent); }
+      .deadline-critical { border-left: 4px solid #EF4444; background: linear-gradient(to right, #FEE2E2, transparent); }
+    </style>
+</head>
+<body class="bg-background font-sans">
+  <!-- @COMPONENT: AppHeader [Shows current date and project title] -->
+  <header class="bg-card border-b border-border px-6 py-4 shadow-sm">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <span class="text-xs text-muted-foreground font-medium">Work in Progress</span>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-foreground">TAREFAS EM ANDAMENTO</h1>
+          <p class="text-sm text-muted-foreground">UX/UI Design</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button 
+          onclick="openNewTaskModal()" 
+          class="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors"
+          data-implementation="Should open modal for creating new task"
+        >
+          <i class="fas fa-plus mr-2"></i>Nova tarefa
+        </button>
+        <div class="text-right">
+          <div class="text-sm text-muted-foreground">data:</div>
+          <div class="font-medium text-foreground" id="current-date">01/09/24</div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- @END_COMPONENT: AppHeader -->
+
+  <!-- @COMPONENT: KanbanBoard [Main task management interface] -->
+  <main class="p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
+      
+      <!-- @COMPONENT: KanbanColumn [Pendentes] -->
+      <div class="bg-card rounded-lg border border-border shadow-sm">
+        <div class="p-4 border-b border-border">
+          <h2 class="font-semibold text-foreground mb-1">PENDENTES</h2>
+          <span class="text-xs text-muted-foreground">5 tarefas</span>
+        </div>
+        <div class="p-4 column-scrollable space-y-3">
+          <!-- @MAP: pendingTasks.map(task => ( -->
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-blue border-b-4" 
+               onclick="openTaskModal('task-1')" 
+               data-mock="true"
+               data-implementation="Should open edit modal with task data">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm" data-bind="task.title">Plentário</h3>
+              <span class="text-xs text-muted-foreground">OS - 1394</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3" data-bind="task.description">2 horas processo realizado</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs">Core View</span>
+              <span class="text-xs text-muted-foreground">Prazo: 26/08/25</span>
+            </div>
+          </div>
+
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-orange border-b-4 deadline-warning" 
+               onclick="openTaskModal('task-2')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Incluir documento</h3>
+              <span class="text-xs text-muted-foreground">OS - 1393</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Incluir DOC e disretinha quando não veio no arquivo</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs">Fiscal View</span>
+              <span class="text-xs text-warning font-medium">Prazo: 08/09/24</span>
+            </div>
+          </div>
+
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-teal border-b-4" 
+               onclick="openTaskModal('task-3')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Estoque - Pós reunião</h3>
+              <span class="text-xs text-muted-foreground">OS - 1395</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Adicionar filtros das reuniões do problema</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs">Fiscal View</span>
+              <span class="text-xs text-muted-foreground">Prazo: 15/09/25</span>
+            </div>
+          </div>
+
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-pink border-b-4 deadline-critical" 
+               onclick="openTaskModal('task-4')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">E-sfinge v1</h3>
+              <span class="text-xs text-muted-foreground">OS - 0003</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Aceder ao problema no sistema com feedback dos utilizadores</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs">Crítico</span>
+              <span class="text-xs text-destructive font-medium">Prazo: amanhã</span>
+            </div>
+          </div>
+          <!-- @END_MAP -->
+        </div>
+      </div>
+      <!-- @END_COMPONENT: KanbanColumn -->
+
+      <!-- @COMPONENT: KanbanColumn [Em Andamento] -->
+      <div class="bg-card rounded-lg border border-border shadow-sm">
+        <div class="p-4 border-b border-border">
+          <h2 class="font-semibold text-foreground mb-1">EM ANDAMENTO</h2>
+          <span class="text-xs text-muted-foreground">2 tarefas</span>
+        </div>
+        <div class="p-4 column-scrollable space-y-3">
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-purple border-b-4" 
+               onclick="openTaskModal('task-5')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Assinador do PWA</h3>
+              <span class="text-xs text-muted-foreground">OS - 1338</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Recuperar trabalhar a fase da atividade desenvolvida</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">Prazo: 30/09/25</span>
+              <span class="text-xs text-muted-foreground">18 horas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- @END_COMPONENT: KanbanColumn -->
+
+      <!-- @COMPONENT: KanbanColumn [Em Análise/Aprovação] -->
+      <div class="bg-card rounded-lg border border-border shadow-sm">
+        <div class="p-4 border-b border-border">
+          <h2 class="font-semibold text-foreground mb-1">EM ANÁLISE/APROVAÇÃO</h2>
+          <span class="text-xs text-muted-foreground">0 tarefas</span>
+        </div>
+        <div class="p-4 column-scrollable">
+          <div class="text-center py-8">
+            <i class="fas fa-clipboard-check text-muted-foreground text-2xl mb-2"></i>
+            <p class="text-sm text-muted-foreground">Nenhuma tarefa em análise</p>
+          </div>
+        </div>
+      </div>
+      <!-- @END_COMPONENT: KanbanColumn -->
+
+      <!-- @COMPONENT: KanbanColumn [Pausado/Com Impedimento] -->
+      <div class="bg-card rounded-lg border border-border shadow-sm">
+        <div class="p-4 border-b border-border">
+          <h2 class="font-semibold text-foreground mb-1">PAUSADO/COM IMPEDIMENTO</h2>
+          <span class="text-xs text-muted-foreground">0 tarefas</span>
+        </div>
+        <div class="p-4 column-scrollable">
+          <div class="text-center py-8">
+            <i class="fas fa-pause-circle text-muted-foreground text-2xl mb-2"></i>
+            <p class="text-sm text-muted-foreground">Nenhuma tarefa pausada</p>
+          </div>
+        </div>
+      </div>
+      <!-- @END_COMPONENT: KanbanColumn -->
+
+      <!-- @COMPONENT: KanbanColumn [Concluídas] -->
+      <div class="bg-card rounded-lg border border-border shadow-sm">
+        <div class="p-4 border-b border-border">
+          <h2 class="font-semibold text-foreground mb-1">CONCLUÍDAS</h2>
+          <span class="text-xs text-muted-foreground">6 tarefas</span>
+        </div>
+        <div class="p-4 column-scrollable space-y-3">
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-blue border-b-4 opacity-75" 
+               onclick="openTaskModal('task-6')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Menu TCE VIRTUAL</h3>
+              <span class="text-xs text-muted-foreground">OS - 0002</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Criado de via paralelo que deixa disparar o que</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs">Concluído</span>
+              <span class="text-xs text-muted-foreground">Prazo: 26/08/25</span>
+            </div>
+          </div>
+
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-orange border-b-4 opacity-75" 
+               onclick="openTaskModal('task-7')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Estoque</h3>
+              <span class="text-xs text-muted-foreground">OS - 1250</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Criar exemplo com planos off-SCJ</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs">Concluído</span>
+              <span class="text-xs text-muted-foreground">Prazo: 23/09/25</span>
+            </div>
+          </div>
+
+          <div class="task-card bg-card border border-border rounded-lg p-4 cursor-pointer team-teal border-b-4 opacity-75" 
+               onclick="openTaskModal('task-8')" 
+               data-mock="true">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-foreground text-sm">Comunicação</h3>
+              <span class="text-xs text-muted-foreground">OS - 1365</span>
+            </div>
+            <p class="text-xs text-muted-foreground mb-3">Descrição incompleta</p>
+            <div class="flex items-center justify-between">
+              <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs">Concluído</span>
+              <span class="text-xs text-muted-foreground">Prazo: sem prazo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- @END_COMPONENT: KanbanColumn -->
+
+    </div>
+  </main>
+  <!-- @END_COMPONENT: KanbanBoard -->
+
+  <!-- @COMPONENT: TaskModal [Modal for editing/creating tasks] -->
+  <div id="taskModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 opacity-0 invisible">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="modal-content bg-card rounded-lg border border-border shadow-xl w-full max-w-md">
+        <div class="p-6 border-b border-border">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-foreground" id="modalTitle">Editar Tarefa</h3>
+            <button onclick="closeModal()" class="text-muted-foreground hover:text-foreground">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <form class="p-6 space-y-4" data-implementation="Should submit via PHP to backend">
+          <!-- @STATE: formData:object = {title, description, deadline, team, status, osNumber} -->
+          
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">Número OS</label>
+            <input 
+              type="text" 
+              class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="OS - 1234"
+              data-bind="formData.osNumber"
+              data-mock="true"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">Título da Tarefa</label>
+            <input 
+              type="text" 
+              class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Digite o título da tarefa"
+              data-bind="formData.title"
+              data-mock="true"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">Descrição</label>
+            <textarea 
+              class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              rows="3"
+              placeholder="Descreva os detalhes da tarefa"
+              data-bind="formData.description"
+              data-mock="true"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-foreground mb-2">Prazo</label>
+              <input 
+                type="date" 
+                class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                data-bind="formData.deadline"
+                data-mock="true"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-foreground mb-2">Estimativa (horas)</label>
+              <input 
+                type="number" 
+                class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="8"
+                data-bind="formData.hours"
+                data-mock="true"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">Equipe/Categoria</label>
+            <select class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    data-bind="formData.team"
+                    data-mock="true">
+              <option value="">Selecione uma equipe</option>
+              <option value="core-view">Core View</option>
+              <option value="fiscal-view">Fiscal View</option>
+              <option value="ux-design">UX Design</option>
+              <option value="desenvolvimento">Desenvolvimento</option>
+              <option value="qa-testing">QA Testing</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">Status</label>
+            <select class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    data-bind="formData.status"
+                    data-mock="true">
+              <option value="pendentes">Pendentes</option>
+              <option value="em-andamento">Em Andamento</option>
+              <option value="em-analise">Em Análise/Aprovação</option>
+              <option value="pausado">Pausado/Com Impedimento</option>
+              <option value="concluidas">Concluídas</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4">
+            <button 
+              type="button" 
+              onclick="closeModal()" 
+              class="px-4 py-2 text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-muted transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              data-implementation="Should validate and save task data via PHP"
+            >
+              Salvar Tarefa
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- @END_COMPONENT: TaskModal -->
+
+  <script>
+    (function() {
+      // Update current date
+      function updateCurrentDate() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        });
+        document.getElementById('current-date').textContent = dateStr;
+      }
+
+      // Modal functions
+      window.openTaskModal = function(taskId) {
+        const modal = document.getElementById('taskModal');
+        const title = document.getElementById('modalTitle');
+        
+        if (taskId === 'new') {
+          title.textContent = 'Nova Tarefa';
+          // TODO: Clear form fields for new task
+        } else {
+          title.textContent = 'Editar Tarefa';
+          // TODO: Load task data from PHP backend
+        }
+        
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      };
+
+      window.openNewTaskModal = function() {
+        openTaskModal('new');
+      };
+
+      window.closeModal = function() {
+        const modal = document.getElementById('taskModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        // TODO: Reset form if needed
+      };
+
+      // Close modal on backdrop click
+      document.getElementById('taskModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeModal();
+        }
+      });
+
+      // Escape key to close modal
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // Calculate deadline warnings
+      function updateDeadlineWarnings() {
+        // TODO: Implement PHP-side deadline calculation
+        // This should be handled server-side and classes applied accordingly
+        console.log('Deadline warnings should be calculated server-side');
+      }
+
+      // Drag and drop functionality
+      function initializeDragAndDrop() {
+        // TODO: Implement drag and drop with PHP backend updates
+        // Consider using libraries like SortableJS for enhanced UX
+        console.log('Drag and drop should update task status via PHP');
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        updateCurrentDate();
+        updateDeadlineWarnings();
+        initializeDragAndDrop();
+        
+        // Update date every minute
+        setInterval(updateCurrentDate, 60000);
+      });
+
+      // Form submission handler
+      document.querySelector('#taskModal form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // TODO: Validate form data
+        // TODO: Submit to PHP backend via fetch/XMLHttpRequest
+        // TODO: Update UI on success
+        // TODO: Show error messages on failure
+        
+        console.log('Form submission should be handled by PHP backend');
+        closeModal();
+      });
+
+    })();
+  </script>
+
+  <!-- Development Notes for PHP Implementation -->
+  <!--
+  PHP Backend Requirements:
+  
+  1. Database Schema:
+     - tasks table: id, title, description, deadline, team, status, os_number, hours, created_at, updated_at
+     - teams table: id, name, color_code
+     
+  2. API Endpoints:
+     - GET /api/tasks.php - Fetch all tasks
+     - POST /api/tasks.php - Create new task
+     - PUT /api/tasks/{id}.php - Update task
+     - DELETE /api/tasks/{id}.php - Delete task
+     
+  3. Deadline Warning Logic:
+     - Calculate days until deadline server-side
+     - Apply appropriate CSS classes based on deadline proximity
+     
+  4. Team Color Mapping:
+     - Store team colors in database
+     - Apply corresponding CSS classes to cards
+     
+  5. Status Management:
+     - Validate status transitions
+     - Update timestamps on status changes
+     
+  6. Error Handling:
+     - Validation for required fields
+     - Date format validation
+     - Team/status enum validation
+  -->
+
+</body>
+</html>
